@@ -57,12 +57,6 @@ def hf_dir(task: str) -> Path:
     return d
 
 
-def reference_onnx_dir(task: str) -> Path:
-    d = task_dir(task) / "reference-onnx"
-    d.mkdir(parents=True, exist_ok=True)
-    return d
-
-
 def variants_path(task: str) -> Path:
     return task_dir(task) / "variants.json"
 

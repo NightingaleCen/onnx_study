@@ -1,4 +1,4 @@
-"""Stage 0a: download HuggingFace model snapshot + reference ONNX conversion.
+"""Stage 0a: download HuggingFace model snapshot.
 
 Run on BOTH machines independently (no model-sync between them):
 
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import hf_dir, reference_onnx_dir, banner  # noqa: E402
+from common import hf_dir, banner  # noqa: E402
 
 from huggingface_hub import snapshot_download  # base dep
 
@@ -54,28 +54,14 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="STT", help="task name -> models/<model>/ folder")
     ap.add_argument("--repo", default="UsefulSensors/moonshine-tiny-zh")
-    ap.add_argument("--ref-repo", default="onnx-community/moonshine-tiny-zh-ONNX")
-    ap.add_argument("--skip-reference", action="store_true")
-    ap.add_argument("--only-reference", action="store_true")
     args = ap.parse_args()
 
-    if not args.only_reference:
-        banner(f"Downloading HF snapshot: {args.repo}")
-        out = snapshot_download(
-            repo_id=args.repo, local_dir=hf_dir(args.model), revision="main",
-        )
-        print("done:", out)
-        show(hf_dir(args.model), "HF snapshot (config/tokenizer/preprocessor/weights)")
-
-    if not args.skip_reference:
-        banner(f"Downloading reference ONNX: {args.ref_repo}")
-        out = snapshot_download(
-            repo_id=args.ref_repo, local_dir=reference_onnx_dir(args.model),
-            revision="main",
-        )
-        print("done:", out)
-        show(reference_onnx_dir(args.model), "reference ONNX (onnx-community)")
-
+    banner(f"Downloading HF snapshot: {args.repo}")
+    out = snapshot_download(
+        repo_id=args.repo, local_dir=hf_dir(args.model), revision="main",
+    )
+    print("done:", out)
+    show(hf_dir(args.model), "HF snapshot (config/tokenizer/preprocessor/weights)")
     print("\nStage 0 download complete. Inspect the file list above to confirm "
           "which tokenizer/config/preprocessor files are shipped with the model.")
 

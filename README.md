@@ -21,7 +21,7 @@ map and the critical gotchas. The orchestrator runs them chained:
 
     export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=http://127.0.0.1:7890  # only for downloads
     uv sync
-    uv run python scripts/stage0_download.py --model STT         # HF snapshot + reference ONNX
+    uv run python scripts/stage0_download.py --model STT         # HF snapshot
     # drop your audio into data/raw/ (see "Data" below), then:
     uv run python scripts/prepare_data.py --model STT
     uv run python scripts/stage0_export.py --model STT           # needs dev (torch/transformers)
@@ -83,7 +83,7 @@ Netron on Pi: `uv run netron models/STT/D_xnn/encoder_model.onnx --port 8080`, t
 scripts/        common.py, stage0_*.py, stage1*.py, stage2*.py, stage3*.py, stage5*.py,
                 passes/ (3 stubs), analyze.py, bench.py, compare_outputs.py,
                 make_report.py, run_pipeline.py, prepare_data.py
-models/STT/     hf/, reference-onnx/, A/, A_sim/, B/, C/, C_raw/, D_xnn/, D_cpu/,
+models/STT/     hf/, A/, A_sim/, B/, C/, C_raw/, D_xnn/, D_cpu/,
                 D_manual/, variants.json (registry), manifest.json (per dir), gen_meta.json
 data/           raw/ (drop zone), calibration/, eval/
 reports/        analysis/, bench/<host>/*.csv, benchmark_report.md

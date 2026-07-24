@@ -10,7 +10,7 @@
 ## Stage -> script map (all run via `uv run python scripts/<x>.py --model STT`)
 | stage | script | produces (under models/STT/) | needs group |
 |---|---|---|---|
-| 0 download | stage0_download.py | hf/, reference-onnx/ | base |
+| 0 download | stage0_download.py | hf/ | base |
 | 0 export   | stage0_export.py   | A/ (encoder_model.onnx, decoder_model.onnx) + gen_meta.json | dev |
 | 1 simplify | stage1_simplify.py | A_sim/ | base |
 | 1b preopt  | stage1b_preopt.py  | B/ | base |
