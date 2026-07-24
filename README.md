@@ -52,9 +52,31 @@ Drop audio into `data/raw/` (.wav .flac .mp3 .ogg, recursively) OR pass
 `data/eval/` — identical on both machines, so no audio sync needed. `data/` is
 gitignored.
 
-### Pi
+### 树莓派 (Pi 3B, 64-bit OS)
 
-See `docs/pi_setup.md`.
+```bash
+git clone <your-repo> && cd onnx_study
+uv sync                         # full sync if running stage0; --no-group dev for stages 1-5 only
+uv run python -c "import onnxruntime as ort; print(ort.get_available_providers())"
+# must show XNNPACKExecutionProvider -- this is the Pi's edge over the mac wheel.
+```
+
+**1GB RAM 注意**：stage0 (torch+transformers) 可能 OOM。提前加 2G swap：
+```bash
+sudo apt install -y dphys-swapfile
+sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile
+sudo systemctl restart dphys-swapfile
+```
+stages 1–5 + bench 是 base-only，512MB 内存即够。
+
+流水线命令和 mac 完全相同（同上 Quick start），跑完后推回 bench CSV：
+```bash
+uv run python scripts/bench.py --model STT --measurements 100 --warmup 20
+git add reports/bench && git commit -m "bench: pi3b results" && git push
+```
+mac 端 `git pull` 后运行 `make_report.py` 得到 16 组对比总表。
+
+Pi 上看 Netron：`uv run netron models/STT/D_xnn/encoder_model.onnx --port 8080` 然后笔记本上 `ssh -L 8080:localhost:8080 pi@<pi-host>`，浏览器打开 `localhost:8080`。
 
 ## Layout
 

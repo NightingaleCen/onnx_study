@@ -4,7 +4,7 @@
 - Manager: **uv** (Python 3.12 managed by uv, identical on mac & Pi via `.python-version`).
 - Dependency groups: `base` (onnx/onnxruntime/onnxsim/numpy/soundfile/psutil/netron/tabulate/huggingface_hub/soxr) and `dev` (torch/transformers/datasets/onnxscript/librosa-excluded).
 - Mac (dev + bench): `uv sync` (installs base+dev).
-- Pi (bench only): `uv sync --no-group dev` (base only). To RUN stage0 export on the Pi you need the full `uv sync` (torch wheel exists for aarch64, but see docs/pi_setup.md for the 1GB-RAM swap caveat).
+- Pi (bench only): `uv sync --no-group dev` (base only). To RUN stage0 export on the Pi you need the full `uv sync` (torch wheel exists for aarch64; add 2G swap for the 1GB-RAM Pi 3B).
 - Proxy (only for downloads): `export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=http://127.0.0.1:7890` — enable before `stage0_download.py` / `prepare_data.py --hf-dataset` / `uv add`.
 
 ## Stage -> script map (all run via `uv run python scripts/<x>.py --model STT`)
