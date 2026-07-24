@@ -1,0 +1,34 @@
+{
+  "model": "STT",
+  "stage": "B",
+  "files": {
+    "decoder_model.onnx": {
+      "op_stats": {
+        "_status": "not_implemented",
+        "msg": "Pass 1 (op_stats) not implemented yet -- fill in scripts/passes/op_stats.py:run()"
+      },
+      "quant_coverage": {
+        "_status": "not_implemented",
+        "msg": "Pass 2 (quant_coverage) not implemented yet -- fill in scripts/passes/quant_coverage.py:run()"
+      },
+      "redundant_qdq": {
+        "_status": "not_implemented",
+        "msg": "Pass 3 (redundant_qdq) not implemented yet -- fill in scripts/passes/redundant_qdq.py:run()"
+      }
+    },
+    "encoder_model.onnx": {
+      "op_stats": {
+        "_status": "not_implemented",
+        "msg": "Pass 1 (op_stats) not implemented yet -- fill in scripts/passes/op_stats.py:run()"
+      },
+      "quant_coverage": {
+        "_status": "not_implemented",
+        "msg": "Pass 2 (quant_coverage) not implemented yet -- fill in scripts/passes/quant_coverage.py:run()"
+      },
+      "redundant_qdq": {
+        "_status": "not_implemented",
+        "msg": "Pass 3 (redundant_qdq) not implemented yet -- fill in scripts/passes/redundant_qdq.py:run()"
+      }
+    }
+  }
+}

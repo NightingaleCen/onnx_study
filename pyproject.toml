@@ -1,0 +1,24 @@
+[project]
+name = "onnx-study"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "huggingface-hub>=1.24.0",
+    "netron>=9.1.8",
+    "numpy>=2.5.1",
+    "onnx>=1.22.0",
+    "onnxruntime>=1.27.0",
+    "onnxsim>=0.6.5",
+    "psutil>=7.2.2",
+    "soundfile>=0.14.0",
+    "tabulate>=0.10.0",
+]
+
+[dependency-groups]
+dev = [
+    "datasets>=5.0.0",
+    "onnxscript>=0.7.1",
+    "soxr>=1.1.0",
+    "torch>=2.13.0",
+    "transformers>=5.14.1",
+]

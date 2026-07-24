@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+
+# .python-version IS committed (ensures Pi uses same minor)
+
+# Models & data (regenerable per machine; see AGENTS.md)
+models/
+data/raw/
+data/calibration/
+data/eval/
+data/_synthetic/
+
+# Large ONNX artifacts (also under models/, double safety)
+*.onnx
+*.onnx.dat
+*.data
+
+# Reports: keep CSVs + md, screenshots optional
+reports/screenshots/*.png
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Netron temp
+*.netron
