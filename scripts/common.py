@@ -322,3 +322,42 @@ class GreedyPipeline:
                 break
         return ids, {"enc_ms": enc_ms, "dec_steps_ms": step_ms, "dec_total_ms": float(sum(step_ms)),
                      "total_ms": enc_ms + sum(step_ms), "n_tokens": len(ids) - 1}
+
+
+# --------------------------------------------------------------------------- tokenizer (base-safe, no transformers on Pi)
+def load_tokenizer(task: str):
+    """Return a callable: token_ids(list[int]) -> text(str).
+
+    Prefers transformers AutoProcessor (mac, dev group); falls back to the
+    ``tokenizers`` library (base group, works on Pi -- reads tokenizer.json).
+    """
+    tk_path = hf_dir(task) / "tokenizer.json"
+    try:
+        from transformers import AutoProcessor
+        proc = AutoProcessor.from_pretrained(str(hf_dir(task)))
+        def _decode(ids):
+            return proc.tokenizer.decode(ids, skip_special_tokens=True)
+        return _decode
+    except Exception:
+        from tokenizers import Tokenizer
+        tok = Tokenizer.from_file(str(tk_path))
+        def _decode(ids):
+            return tok.decode(ids, skip_special_tokens=True)
+        return _decode
+
+
+def load_eval_transcripts() -> dict[str, str] | None:
+    """Read ``data/eval/transcripts.csv`` (two cols: filename, text)."""
+    p = Path("data/eval/transcripts.csv")
+    if not p.exists():
+        return None
+    mapping = {}
+    with p.open() as f:
+        for i, line in enumerate(f):
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = line.split("\t" if "\t" in line else ",")
+            if len(parts) >= 2:
+                mapping[parts[0].strip()] = parts[1].strip()
+    return mapping

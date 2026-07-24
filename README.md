@@ -3,10 +3,9 @@
 A hands-on study of ONNX export, onnxsim, static QDQ quantization, and ONNX Runtime
 graph-optimization/EP-fusion for deploying an ASR model on a Raspberry Pi 3B.
 
-The pipeline is task-named (e.g. `STT` under `models/STT/`); a future TTS model
-slots in identically as `models/TTS/`.
+The pipeline is task-named (e.g. `STT` under `models/STT/`).
 
-## Pipeline (stages)
+## Pipeline
 
 ```
 0 download ── 0 export ─ 1 simplify ─ 1b preopt ─ 2 quantize ─ 3 runtime ─ 5 manual (opt)
@@ -17,12 +16,9 @@ map and the critical gotchas. The orchestrator runs them chained:
 
     uv run python scripts/run_pipeline.py --model STT --from 0-download --to 3-runtime
 
-### Quick start (mac, dev)
+### Quick start
 
-    export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=http://127.0.0.1:7890  # only for downloads
-    uv sync
     uv run python scripts/stage0_download.py --model STT         # HF snapshot
-    # drop your audio into data/raw/ (see "Data" below), then:
     uv run python scripts/prepare_data.py --model STT
     uv run python scripts/stage0_export.py --model STT           # needs dev (torch/transformers)
     uv run python scripts/stage1_simplify.py --model STT
@@ -43,39 +39,16 @@ mac wheel; the EP actually used is recorded). Each Pi run writes
     uv run python scripts/make_report.py              # merged markdown table
     uv run python scripts/make_report.py --compare D_cpu D_manual   # manual-optim payoff
 
-### Data (you supply)
+### Data
 
 Drop audio into `data/raw/` (.wav .flac .mp3 .ogg, recursively) OR pass
 `--hf-dataset <repo> --hf-split <split>`. `prepare_data.py` converts to 16 kHz mono
 16-bit PCM and does a **deterministic** (seed 1337) split into `data/calibration/` +
-`data/eval/` — identical on both machines, so no audio sync needed. `data/` is
-gitignored.
+`data/eval/`. Optionally pass `--text-column <name>` (HF mode) or `--transcripts <path>`
+(manual mode) to include reference transcripts; these are written alongside the wavs as
+`transcripts.csv` and consumed by `bench.py --accuracy` for WER/CER evaluation.
 
-### Raspberry Pi (3B, 64-bit OS)
-
-```bash
-git clone <your-repo> && cd onnx_study
-uv sync                         # full sync if running stage0; --no-group dev for stages 1-5 only
-uv run python -c "import onnxruntime as ort; print(ort.get_available_providers())"
-# must show XNNPACKExecutionProvider -- this is the Pi's edge over the mac wheel.
-```
-
-**1GB RAM caveat**: stage0 (torch+transformers) may OOM. Add 2G swap first:
-```bash
-sudo apt install -y dphys-swapfile
-sudo sed -i 's/^CONF_SWAPSIZE=.*/CONF_SWAPSIZE=2048/' /etc/dphys-swapfile
-sudo systemctl restart dphys-swapfile
-```
-Stages 1–5 + bench are base-only and run comfortably in 512MB.
-
-Pipeline commands are identical to the macOS Quick start above. After benchmarking, push results back:
-```bash
-uv run python scripts/bench.py --model STT --measurements 100 --warmup 20
-git add reports/bench && git commit -m "bench: pi3b results" && git push
-```
-On the mac, `git pull` then `make_report.py` produces the 16-group merged table.
-
-Netron on Pi: `uv run netron models/STT/D_xnn/encoder_model.onnx --port 8080`, then from your laptop `ssh -L 8080:localhost:8080 pi@<pi-host>` and open `localhost:8080` in a browser.
+`data/` is gitignored — every machine regenerates its own (identical on both).
 
 ## Layout
 
@@ -88,5 +61,3 @@ models/STT/     hf/, A/, A_sim/, B/, C/, C_raw/, D_xnn/, D_cpu/,
 data/           raw/ (drop zone), calibration/, eval/
 reports/        analysis/, bench/<host>/*.csv, benchmark_report.md
 ```
-`models/` and `data/` are gitignored — every machine builds its own (download +
-pipeline). `reports/bench/*.csv` are committed for cross-machine merging.

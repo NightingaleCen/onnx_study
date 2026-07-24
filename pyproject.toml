@@ -4,6 +4,7 @@ version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
     "huggingface-hub>=1.24.0",
+    "jiwer>=4.0.0",
     "netron>=9.1.8",
     "numpy>=2.5.1",
     "onnx>=1.22.0",
@@ -12,6 +13,7 @@ dependencies = [
     "psutil>=7.2.2",
     "soundfile>=0.14.0",
     "tabulate>=0.10.0",
+    "tokenizers>=0.22.2",
 ]
 
 [dependency-groups]
