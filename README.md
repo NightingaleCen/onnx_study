@@ -43,10 +43,16 @@ mac wheel; the EP actually used is recorded). Each Pi run writes
 
 Drop audio into `data/raw/` (.wav .flac .mp3 .ogg, recursively) OR pass
 `--hf-dataset <repo> --hf-split <split>`. `prepare_data.py` converts to 16 kHz mono
-16-bit PCM and does a **deterministic** (seed 1337) split into `data/calibration/` +
-`data/eval/`. Optionally pass `--text-column <name>` (HF mode) or `--transcripts <path>`
-(manual mode) to include reference transcripts; these are written alongside the wavs as
-`transcripts.csv` and consumed by `bench.py --accuracy` for WER/CER evaluation.
+16-bit PCM, adds optional transcripts via `--text-column` / `--transcripts`, and does
+a **deterministic** (seed 1337) split into `data/calibration/` + `data/eval/`.
+
+For convenience, `fetch_aishell.py` downloads a small subset of
+[AISHELL-1](https://huggingface.co/datasets/AISHELL/AISHELL-1) (3 speakers, ~80
+clips with transcripts) directly into `data/raw/` — ready to feed into
+`prepare_data.py`:
+
+    uv run python scripts/fetch_aishell.py
+    uv run python scripts/prepare_data.py --model STT --transcripts data/raw/transcripts.tsv
 
 `data/` is gitignored — every machine regenerates its own (identical on both).
 

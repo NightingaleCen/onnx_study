@@ -21,8 +21,9 @@ from common import (stage_dir, list_onnx, write_manifest, upsert_variant,  # noq
                     preprocess_audio, list_onnx as _lo, banner)
 
 import numpy as np
+import onnx
 import onnxruntime as ort
-from onnxruntime.quantization import (quantize_static, QuantFormat, QuantType,
+from onnxruntime.quantization import (quantize_static, quantize_dynamic, QuantFormat, QuantType,
                                       CalibrationMethod)
 
 
@@ -76,43 +77,54 @@ def main():
     ap.add_argument("--out", dest="out", default="C")
     ap.add_argument("--per-channel", action="store_true", default=False,
                     help="per-channel weight quantization (better acc, may trip some EP kernels)")
+    ap.add_argument("--dynamic", action="store_true", default=False,
+                    help="dynamic quantization (no calibration data needed; safer for ASR decoders)")
     args = ap.parse_args()
     in_dir = stage_dir(args.model, args.inp)
     out_dir = stage_dir(args.model, args.out)
-    wavs = calib_wavs()
-    assert wavs, "no data/calibration/*.wav -- run prepare_data.py (drop audio in data/raw/)"
-    meta = __import__("common").load_gen_meta(args.model)
-    a_enc = stage_dir(args.model, "A") / "encoder_model.onnx"
-    banner(f"quantize_static  {in_dir} -> {out_dir}  ({len(wavs)} calib wavs, QDQ S8S8)")
+    if args.dynamic:
+        banner(f"quantize_dynamic  {in_dir} -> {out_dir}  (QInt8 weights, no calib needed)")
+    else:
+        wavs = calib_wavs()
+        assert wavs, "no data/calibration/*.wav -- run prepare_data.py (drop audio in data/raw/)"
+        meta = __import__("common").load_gen_meta(args.model)
+        a_enc = stage_dir(args.model, "A") / "encoder_model.onnx"
+        banner(f"quantize_static  {in_dir} -> {out_dir}  ({len(wavs)} calib wavs, QDQ S8S8)")
 
     for p in list_onnx(in_dir):
-        model = onnx.load(str(p)) if False else None  # noqa
-        import onnx
-        names = [i.name for i in onnx.load(str(p)).graph.input]
-        if "input_values" in names:
-            batches = encoder_batches(wavs); kind = "encoder"
-        elif "input_ids" in names:
-            batches = decoder_batches(wavs, a_enc, meta["dec_fix_len"],
-                                      meta["bos"], meta["pad"]); kind = "decoder"
-        else:
-            print(f"  {p.name}: unknown inputs {names}, skipping"); continue
-        reader = _Reader(names, batches)
         op = out_dir / p.name
-        quantize_static(str(p), str(op), reader,
-                        quant_format=QuantFormat.QDQ,
-                        activation_type=QuantType.QInt8,
-                        weight_type=QuantType.QInt8,
-                        calibrate_method=CalibrationMethod.MinMax,
-                        per_channel=args.per_channel)
+        if args.dynamic:
+            quantize_dynamic(str(p), str(op), weight_type=QuantType.QInt8,
+                             per_channel=args.per_channel)
+            kind = "dyn"
+        else:
+            names = [i.name for i in onnx.load(str(p)).graph.input]
+            if "input_values" in names:
+                batches = encoder_batches(wavs); kind = "encoder"
+            elif "input_ids" in names:
+                batches = decoder_batches(wavs, a_enc, meta["dec_fix_len"],
+                                          meta["bos"], meta["pad"]); kind = "decoder"
+            else:
+                print(f"  {p.name}: unknown inputs {names}, skipping"); continue
+            reader = _Reader(names, batches)
+            quantize_static(str(p), str(op), reader,
+                            quant_format=QuantFormat.QDQ,
+                            activation_type=QuantType.QInt8,
+                            weight_type=QuantType.QInt8,
+                            calibrate_method=CalibrationMethod.MinMax,
+                            per_channel=args.per_channel)
         onnx.checker.check_model(str(op))
         print(f"  {p.name} [{kind}]: quantized -> {op.stat().st_size//1024}KB")
     write_manifest(args.model, args.out, created_by="stage2_quantize.py",
-                   args={"from": args.inp, "quant_format": "QDQ", "activation": "int8",
+                   args={"from": args.inp, "quant_format": "QDQ",
+                         "mode": "dynamic" if args.dynamic else "static",
+                         "activation": "int8" if not args.dynamic else "dynamic",
                          "weight": "int8", "per_channel": args.per_channel,
-                         "calib_wavs": len(wavs)},
+                         "calib_wavs": len(wavs) if not args.dynamic else 0},
                    extra={"dtype": "int8"})
     upsert_variant(args.model, args.out, path=args.out, dtype="int8",
-                   note=f"QDQ static S8S8 from {args.inp}", created_by="stage2_quantize.py")
+                   note=f"QDQ {'dynamic' if args.dynamic else 'static'} S8S8 from {args.inp}",
+                   created_by="stage2_quantize.py")
     print("done.")
 
 
