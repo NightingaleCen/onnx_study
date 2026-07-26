@@ -15,7 +15,7 @@
 | 1 simplify | pipeline/simplify.py | A_sim/ | base |
 | 1b preopt  | pipeline/preopt.py   | B/ | base |
 | 2 quantize | pipeline/quantize.py | C/ (and C_raw/ with `--in A`) | base |
-| 3 runtime  | pipeline/runtime_opt.py | D_xnn/, D_cpu/ | base |
+| 3 runtime  | pipeline/runtime_opt.py | D/ | base |
 | analysis  | analysis/analyze.py         | reports/analysis/*_*.json | base |
 | bench     | analysis/bench.py           | reports/bench/<host>/*.csv | base |
 | compare   | analysis/compare_outputs.py | stdout | base (+dev for --decode) |

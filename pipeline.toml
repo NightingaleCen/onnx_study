@@ -36,3 +36,9 @@ source = "A"
 [model.variants.C_skip_sim]
 stage = "2_quantize"
 source = "B_skip_sim"
+
+[model.variants.D]
+stage = "3_runtime"
+source = "C"
+provider = "cpu"
+# On the Pi change provider to "xnnpack".

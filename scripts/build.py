@@ -24,6 +24,7 @@ STAGE_SPEC = {
     "1_simplify":    {"script": "simplify.py",  "has_source": True},
     "1b_preopt":     {"script": "preopt.py",   "has_source": True},
     "2_quantize":    {"script": "quantize.py",  "has_source": True},
+    "3_runtime":     {"script": "runtime_opt.py", "has_source": True, "extra_args": ["provider"]},
 }
 
 
@@ -44,6 +45,9 @@ def build(target: str, model: str, variants: dict, built: set):
         cmd += ["--in", source, "--out", target]
     if target == "A":
         cmd += ["--dec-fix-len", "128"]
+    for key in spec.get("extra_args", []):
+        if key in v:
+            cmd += [f"--{key}", str(v[key])]
     print(f"  [{target}] build -> {' '.join(cmd)}")
     result = subprocess.run(cmd)
     if result.returncode != 0:

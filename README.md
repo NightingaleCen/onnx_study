@@ -9,14 +9,13 @@ The pipeline is task-named (e.g. `STT` under `models/STT/`).
 
 ```
 0 download ── 0 export ─ 1 simplify ─ 1b preopt ─ 2 quantize ─ 3 runtime
-   hf/            A/        A_sim/       B/         C/        D_xnn D_cpu
+   hf/            A/        A_sim/       B/         C/            D/
 ```
 
 ### `build.py` — declarative pipeline (recommended)
 
 `build.py` reads `pipeline.toml` (which defines the DAG of variants and their
 dependencies) and runs the stage scripts in topological order. 
-Each completed stage auto-registers itself in `models/<model>/variants.json` for downstream benchmarking and analysis.
 
 ```
 # Build all variants in dependency order:
@@ -43,7 +42,7 @@ stage = "2_quantize"
 source = "B"
 ```
 
-`stage` keys: `0_export`, `1_simplify`, `1b_preopt`, `2_quantize`.
+`stage` keys: `0_export`, `1_simplify`, `1b_preopt`, `2_quantize`, `3_runtime`.
 
 ### Quick start
 
@@ -53,15 +52,14 @@ source = "B"
     uv run python scripts/pipeline/simplify.py --model STT
     uv run python scripts/pipeline/preopt.py --model STT
     uv run python scripts/pipeline/quantize.py --model STT              # -> C (dynamic QDQ, QInt8 weights)
-    uv run python scripts/pipeline/runtime_opt.py --model STT --provider cpu         # -> D_cpu
-    uv run python scripts/pipeline/runtime_opt.py --model STT --provider xnnpack     # -> D_xnn (Pi only)
+    uv run python scripts/pipeline/runtime_opt.py --model STT --provider cpu       # -> D
     uv run python scripts/analysis/analyze.py --model STT --stage C      # runs the 3 analysis passes
     uv run python scripts/analysis/bench.py --model STT                  # 8-group matrix -> CSV
     uv run python scripts/analysis/compare_outputs.py --model STT --ref A --test C
 
 ### Benchmark
 
-`bench.py` runs all variants {A, A_sim, C_raw, C, +D_xnn/D_cpu if present, etc.} across
+`bench.py` runs all registered variants ({A, A_sim, C_raw, C, D, etc.}) across
 opt levels {DISABLE_ALL, EXTENDED}. EXTENDED requests XNNPACK (falls back to CPU if not available; the EP actually used is recorded).
 
 ### Data
