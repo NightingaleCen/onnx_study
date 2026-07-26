@@ -70,7 +70,7 @@ def iter_manual(transcripts_path=None):
     files = sorted(p for p in RAW_DIR.rglob("*") if p.suffix.lower() in SUPPORTED and p.is_file())
     for p in files:
         try:
-            text = tmap.get(p.stem)
+            text = tmap.get(p.name)
             yield p.stem, load_file(p), text
         except Exception as e:
             yield p.stem, None, None
