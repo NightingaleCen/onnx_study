@@ -89,6 +89,7 @@ DEFAULT_VARIANTS: dict[str, dict] = {
     "B":       {"path": "B",       "dtype": "fp32", "note": "quant_pre_process"},
     "C":       {"path": "C",       "dtype": "int8", "note": "QDQ dynamic quant from B"},
     "C_raw":   {"path": "C_raw",   "dtype": "int8", "note": "QDQ dynamic quant from A (no simplify)"},
+    "D":       {"path": "D",       "dtype": "int8", "note": "runtime-optimized"},
     "D_xnn":   {"path": "D_xnn",   "dtype": "int8", "note": "runtime-optimized, XNNPACK EP"},
     "D_cpu":   {"path": "D_cpu",   "dtype": "int8", "note": "runtime-optimized, CPU EP"},
     "D_manual": {"path": "D_manual", "dtype": "int8", "note": "user hand-edited"},

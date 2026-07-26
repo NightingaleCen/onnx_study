@@ -21,6 +21,10 @@
 | compare   | analysis/compare_outputs.py | stdout | base (+dev for --decode) |
 | data      | dataset/prepare_data.py    | data/calibration/*, data/eval/* | base (+dev for --hf-dataset) |
 
+Stage 0-export needs the `dev` group and is a **prerequisite** — run it once to
+produce `A/`, then `build.py` (which only covers stages 1–3) uses it as an
+`external` input. The Pi skips stage 0 entirely (models are synced from the Mac).
+
 ## Analysis passes (scripts/passes/)
 Three stubs: `op_stats.py` (Pass1 operator counts), `quant_coverage.py` (Pass2 QDQ coverage), `redundant_qdq.py` (Pass3 redundant Q→DQ). Each has a documented I/O contract in its docstring and `run()` raising NotImplementedError. `analyze.py` tolerates NotImplementedError/error gracefully so you can implement one at a time.
 

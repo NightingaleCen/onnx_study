@@ -11,7 +11,9 @@
 name = "STT"
 
 [model.variants.A]
-stage = "0_export"
+# Produced externally by export_onnx.py (needs PyTorch). "A" is the directory
+# name under models/STT/ where the exported .onnx files live.
+external = "A"
 
 [model.variants.A_sim]
 stage = "1_simplify"

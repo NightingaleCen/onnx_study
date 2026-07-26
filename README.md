@@ -8,14 +8,18 @@ The pipeline is task-named (e.g. `STT` under `models/STT/`).
 ## Pipeline
 
 ```
-0 download ── 0 export ─ 1 simplify ─ 1b preopt ─ 2 quantize ─ 3 runtime
+0 download ── 0 export ── 1 simplify ─ 1b preopt ─ 2 quantize ─ 3 runtime
    hf/            A/        A_sim/       B/         C/            D/
 ```
+
+Stage 0 export (PyTorch/ONNX export) is a prerequisite produced once by
+`export_onnx.py`. The core pipeline (`build.py`) only covers stages 1–3.
 
 ### `build.py` — declarative pipeline (recommended)
 
 `build.py` reads `pipeline.toml` (which defines the DAG of variants and their
-dependencies) and runs the stage scripts in topological order. 
+dependencies) and runs the stage scripts in topological order. Variants marked
+`external` are not built — they must already exist on disk.
 
 ```
 # Build all variants in dependency order:
@@ -31,18 +35,19 @@ uv run python scripts/build.py --target C_skip_sim
 name = "STT"
 
 [model.variants.A]
-stage = "0_export"
+external = "A"             # not built — must exist on disk
 
 [model.variants.A_sim]
 stage = "1_simplify"
 source = "A"
 
-[model.variants.C]
-stage = "2_quantize"
-source = "B"
+[model.variants.D]
+stage = "3_runtime"
+source = "C"
+provider = "cpu"
 ```
 
-`stage` keys: `0_export`, `1_simplify`, `1b_preopt`, `2_quantize`, `3_runtime`.
+`stage` keys: `1_simplify`, `1b_preopt`, `2_quantize`, `3_runtime`.
 
 ### Quick start
 

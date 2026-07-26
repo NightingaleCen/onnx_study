@@ -4,6 +4,9 @@ Resolves the DAG: each variant depends on its ``source``. Variants already
 built in the same run (via shared dependencies) are skipped; nothing is
 skipped based on disk state — every invocation rebuilds from scratch.
 
+Variants marked ``external`` are not built by this script; they must already
+exist on disk (e.g. A produced by export_onnx.py).
+
 Usage:
     uv run python scripts/build.py                    # build all variants
     uv run python scripts/build.py --target C_skip_sim  # build a single variant + its chain
@@ -15,12 +18,11 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import banner  # noqa: E402
+from common import banner, task_dir, list_onnx, DEFAULT_VARIANTS, save_variants  # noqa: E402
 
 SCRIPT_ROOT = Path(__file__).resolve().parent / "pipeline"
 
 STAGE_SPEC = {
-    "0_export":      {"script": "export_onnx.py",   "has_source": False},
     "1_simplify":    {"script": "simplify.py",  "has_source": True},
     "1b_preopt":     {"script": "preopt.py",   "has_source": True},
     "2_quantize":    {"script": "quantize.py",  "has_source": True},
@@ -32,6 +34,19 @@ def build(target: str, model: str, variants: dict, built: set):
     if target in built:
         return
     v = variants[target]
+
+    if external := v.get("external"):
+        ext_dir = task_dir(model) / str(external)
+        if not ext_dir.exists() or not list_onnx(ext_dir):
+            raise SystemExit(f"variant '{target}' is external but {ext_dir} has no .onnx "
+                             "files — run export_onnx.py first")
+        print(f"  [{target}] external ({external}) -> skip")
+        built.add(target)
+        return
+
+    if "stage" not in v:
+        raise SystemExit(f"variant '{target}' has neither 'stage' nor 'external'")
+
     source = v.get("source")
     if source:
         if source not in variants:
@@ -42,9 +57,9 @@ def build(target: str, model: str, variants: dict, built: set):
     script = SCRIPT_ROOT / spec["script"]
     cmd = [sys.executable, str(script), "--model", model]
     if spec["has_source"]:
-        cmd += ["--in", source, "--out", target]
-    if target == "A":
-        cmd += ["--dec-fix-len", "128"]
+        src_v = variants[source]
+        in_dir = str(src_v.get("external", source))
+        cmd += ["--in", in_dir, "--out", target]
     for key in spec.get("extra_args", []):
         if key in v:
             cmd += [f"--{key}", str(v[key])]
@@ -53,6 +68,33 @@ def build(target: str, model: str, variants: dict, built: set):
     if result.returncode != 0:
         raise SystemExit(f"build of {target} failed (exit {result.returncode})")
     built.add(target)
+
+
+def rebuild_variants(model: str):
+    """Rebuild variants.json from actual on-disk .onnx directories."""
+    import json
+    td = task_dir(model)
+    variants: dict[str, dict] = {}
+    for child in sorted(td.iterdir()):
+        if not child.is_dir():
+            continue
+        onnx_files = list_onnx(child)
+        if not onnx_files:
+            continue
+        name = child.name
+        default = dict(DEFAULT_VARIANTS.get(name, {"path": name, "dtype": "?"}))
+        entry = {"path": name, "dtype": default.get("dtype", "?"),
+                 "note": default.get("note", "")}
+        mf = child / "manifest.json"
+        if mf.exists():
+            manifest = json.loads(mf.read_text())
+            if "created_by" in manifest:
+                entry["created_by"] = manifest["created_by"]
+            if "timestamp" in manifest:
+                entry["timestamp"] = manifest["timestamp"]
+        variants[name] = entry
+    save_variants(model, variants)
+    print(f"variants registry updated: {sorted(variants.keys())}")
 
 
 def main():
@@ -91,6 +133,7 @@ def main():
     for t in targets:
         build(t, model, variants, built)
     print("done.")
+    rebuild_variants(model)
 
 
 if __name__ == "__main__":
