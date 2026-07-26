@@ -272,7 +272,7 @@ def preprocess_audio(path: Path, sr: int = CANONICAL_SR) -> np.ndarray:
     data = data.mean(axis=1) if data.shape[1] > 1 else data[:, 0]
     if file_sr != sr:
         raise ValueError(f"{path.name}: sr={file_sr} but model expects {sr}. "
-                          "Run scripts/prepare_data.py to produce 16 kHz mono WAV.")
+                          "Run scripts/dataset/prepare_data.py to produce 16 kHz mono WAV.")
     return data.astype(np.float32)
 
 

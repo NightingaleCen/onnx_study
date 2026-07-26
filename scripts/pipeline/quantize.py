@@ -10,14 +10,14 @@ Produces a QDQ model (QuantFormat.QDQ with DynamicQuantizeLinear nodes).
 The INT8 weight computation + ORT EXTENDED fusion yields ~30-50% speedup
 with modest CER degradation (~0.15 -> ~0.28).
 
-    uv run python scripts/stage2_quantize.py --model STT            # B -> C
-    uv run python scripts/stage2_quantize.py --model STT --in A --out C_raw   # no simplify
+    uv run python scripts/pipeline/quantize.py --model STT            # B -> C
+    uv run python scripts/pipeline/quantize.py --model STT --in A --out C_raw   # no simplify
 """
 from __future__ import annotations
 
 import argparse, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import stage_dir, list_onnx, write_manifest, upsert_variant, banner  # noqa: E402
 
 import onnx

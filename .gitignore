@@ -28,3 +28,6 @@ reports/screenshots/*.png
 
 # Netron temp
 *.netron
+
+# benchmark results
+reports/

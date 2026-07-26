@@ -18,13 +18,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import task_dir, list_onnx, MODELS_DIR, banner  # noqa: E402
 
-SCRIPT_ROOT = Path(__file__).resolve().parent
+SCRIPT_ROOT = Path(__file__).resolve().parent / "pipeline"
 
 STAGE_SPEC = {
-    "0_export":      {"script": "stage0_export.py",   "has_source": False},
-    "1_simplify":    {"script": "stage1_simplify.py",  "has_source": True},
-    "1b_preopt":     {"script": "stage1b_preopt.py",   "has_source": True},
-    "2_quantize":    {"script": "stage2_quantize.py",  "has_source": True},
+    "0_export":      {"script": "export_onnx.py",   "has_source": False},
+    "1_simplify":    {"script": "simplify.py",  "has_source": True},
+    "1b_preopt":     {"script": "preopt.py",   "has_source": True},
+    "2_quantize":    {"script": "quantize.py",  "has_source": True},
 }
 
 

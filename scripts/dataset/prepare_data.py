@@ -3,10 +3,10 @@
 DATA OWNERSHIP: YOU choose the dataset. Two ways to supply audio:
 
   (1) Drop files into ``data/raw/`` (recursively; .wav .flac .mp3 .ogg supported) and run:
-        uv run python scripts/prepare_data.py --model STT
+        uv run python scripts/dataset/prepare_data.py --model STT
 
   (2) Pull directly from a HuggingFace dataset (needs the `dev` group: `datasets`):
-        uv run python scripts/prepare_data.py --model STT \
+        uv run python scripts/dataset/prepare_data.py --model STT \
             --hf-dataset <repo> --hf-split <split> [--audio-column audio]
 
 Contract of the produced files (consumed by stage2 calibration reader & bench.py):
@@ -19,7 +19,7 @@ Contract of the produced files (consumed by stage2 calibration reader & bench.py
 Note: Pi runs base deps only (no datasets/librosa). Re-run prepare_data on the Pi
 with the same source files (copy data/raw/ over once) or re-issue the HF pull.
 
-    uv run python scripts/prepare_data.py --model STT --calib-n 50 --eval-n 30
+    uv run python scripts/dataset/prepare_data.py --model STT --calib-n 50 --eval-n 30
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ import csv
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import DATA_DIR, CANONICAL_SR, banner  # noqa: E402
 
 import numpy as np

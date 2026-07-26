@@ -7,14 +7,14 @@ Runs greedy decode on the eval set for --ref and --test and compares:
 If you hand-edited a graph (D_manual) and it changed outputs, this is how you
 PROVE correctness numerically before trusting benchmarks.
 
-    uv run python scripts/compare_outputs.py --model STT --ref A --test D_manual
-    uv run python scripts/compare_outputs.py --model STT --ref A --test C --decode
+    uv run python scripts/analysis/compare_outputs.py --model STT --ref A --test D_manual
+    uv run python scripts/analysis/compare_outputs.py --model STT --ref A --test C --decode
 """
 from __future__ import annotations
 
 import argparse, glob, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import task_dir, load_variants, preprocess_audio, banner, GreedyPipeline  # noqa: E402
 
 

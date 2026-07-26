@@ -15,15 +15,15 @@ With --accuracy, after latency measurements bench.py also computes WER/CER on th
 eval set (one decode per clip; reference text from data/eval/transcripts.csv, which
 prepare_data.py produces if --text-column / --transcripts is supplied).
 
-    uv run python scripts/bench.py --model STT --measurements 30 --warmup 5
-    uv run python scripts/bench.py --model STT --variants A,C,D_manual
-    uv run python scripts/bench.py --model STT --accuracy          # + WER/CER
+    uv run python scripts/analysis/bench.py --model STT --measurements 30 --warmup 5
+    uv run python scripts/analysis/bench.py --model STT --variants A,C,D_manual
+    uv run python scripts/analysis/bench.py --model STT --accuracy          # + WER/CER
 """
 from __future__ import annotations
 
 import argparse, csv, glob, sys, time
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import (task_dir, load_variants, REPORTS_DIR,  # noqa: E402
                     hostname, git_commit, peak_rss_mb, resolve_providers,
                     preprocess_audio, load_tokenizer, load_eval_transcripts, banner)

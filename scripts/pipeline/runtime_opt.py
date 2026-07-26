@@ -6,13 +6,13 @@ ORT wheel XNNPACK is NOT compiled in -> only D_cpu is produced there; the Pi's
 aarch64 wheel includes XNNPACK -> D_xnn is produced there. bench.py records the EP
 that actually ran.
 
-    uv run python scripts/stage3_runtime_opt.py --model STT --in C
+    uv run python scripts/pipeline/runtime_opt.py --model STT --in C
 """
 from __future__ import annotations
 
 import argparse, sys, glob
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import (stage_dir, list_onnx, write_manifest, upsert_variant,  # noqa: E402
                     preprocess_audio, resolve_providers, banner)
 

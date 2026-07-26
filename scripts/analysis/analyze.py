@@ -4,9 +4,9 @@ Passes live in scripts/passes/ as STUBS. You implement them; this driver tolerat
 NotImplementedError (prints 'not implemented' and continues) so you can implement
 passes one at a time and still get partial output.
 
-    uv run python scripts/analyze.py --model STT --stage B
-    uv run python scripts/analyze.py --model STT --stage C       (after stage3 also D_xnn, D_cpu)
-    uv run python scripts/analyze.py --model STT --stage A --pass op_stats
+    uv run python scripts/analysis/analyze.py --model STT --stage B
+    uv run python scripts/analysis/analyze.py --model STT --stage C       (after stage3 also D_xnn, D_cpu)
+    uv run python scripts/analysis/analyze.py --model STT --stage A --pass op_stats
 
 Writes reports/analysis/<model>_<stage>.json and prints a console table.
 """
@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import argparse, importlib, json, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-sys.path.insert(0, str(Path(__file__).resolve().parent / "passes"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "passes"))
 from common import stage_dir, list_onnx, REPORTS_DIR, banner  # noqa: E402
 
 import onnx

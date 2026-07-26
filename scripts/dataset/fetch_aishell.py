@@ -4,8 +4,8 @@ Downloads 3 speaker archives (~1000 clips total), extracts wavs, parses
 transcripts, and evenly samples 80 clips into data/raw/ + data/raw/transcripts.tsv.
 Then run prepare_data.py to produce the deterministic calib/eval split.
 
-    uv run python scripts/fetch_aishell.py
-    uv run python scripts/prepare_data.py --model STT --calib-n 50 --eval-n 30 \
+    uv run python scripts/dataset/fetch_aishell.py
+    uv run python scripts/dataset/prepare_data.py --model STT --calib-n 50 --eval-n 30 \
         --transcripts data/raw/transcripts.tsv
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ import tempfile
 from io import StringIO
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import DATA_DIR, CANONICAL_SR, banner  # noqa: E402
 
 from huggingface_hub import hf_hub_download

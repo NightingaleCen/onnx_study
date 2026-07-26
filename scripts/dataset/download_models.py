@@ -2,7 +2,7 @@
 
 Run on BOTH machines independently (no model-sync between them):
 
-    uv run python scripts/stage0_download.py --model STT
+    uv run python scripts/dataset/download_models.py --model STT
 
 Drop your own calibration/eval dataset under ``data/raw/`` separately
 (see ``scripts/prepare_data.py``). This script only fetches the model.
@@ -13,7 +13,7 @@ import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import hf_dir, banner  # noqa: E402
 
 from huggingface_hub import snapshot_download  # base dep

@@ -14,7 +14,7 @@ uses the identical contract (see reference-onnx/ -- inputs/outputs match above).
 
 This script needs the `dev` dependency group (torch / transformers). Mac-only.
 
-    uv run python scripts/stage0_export.py --model STT --opset 17 --max-new-tokens 24
+    uv run python scripts/pipeline/export_onnx.py --model STT --opset 17 --max-new-tokens 24
 """
 from __future__ import annotations
 
@@ -22,7 +22,7 @@ import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import (  # noqa: E402
     hf_dir, stage_dir, task_dir, write_manifest, upsert_variant, banner,
 )

@@ -4,13 +4,13 @@ Runs onnxruntime.quantization.shape_inference.quant_pre_process before static
 quantization. It performs symbolic shape inference and folds/prepares the graph so
 the QDQ quantizer has accurate tensor type info (critical for dynamic shapes).
 
-    uv run python scripts/stage1b_preopt.py --model STT --in A_sim --out B
+    uv run python scripts/pipeline/preopt.py --model STT --in A_sim --out B
 """
 from __future__ import annotations
 
 import argparse, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import stage_dir, list_onnx, write_manifest, upsert_variant, banner  # noqa: E402
 
 from onnxruntime.quantization.shape_inference import quant_pre_process

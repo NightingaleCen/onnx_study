@@ -3,13 +3,13 @@
 Runs onnxsim on every .onnx in the input stage dir. onnxsim is told to keep
 dynamic input shapes (the encoder's num_samples / decoder's enc_len) symbolic.
 
-    uv run python scripts/stage1_simplify.py --model STT --in A --out A_sim
+    uv run python scripts/pipeline/simplify.py --model STT --in A --out A_sim
 """
 from __future__ import annotations
 
 import argparse, sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import stage_dir, list_onnx, write_manifest, upsert_variant, banner  # noqa: E402
 
 import onnx

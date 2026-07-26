@@ -1,6 +1,6 @@
 """run_pipeline.py -- chain the stage scripts in order.
 
-Convenience orchestrator: invokes each stage as `uv run python scripts/stageX.py`
+Convenience orchestrator: invokes each stage as `uv run python scripts/<script>`
 with a shared --model. Stage 0-download and 0-export need the dev group (mac).
 prepare_data.py is NOT included -- data sourcing is the user's job (see its docstring).
 
@@ -15,13 +15,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import banner  # noqa: E402
 
 STAGES = [
-    ("0-download",   "stage0_download.py",  []),
-    ("0-export",     "stage0_export.py",    []),
-    ("1-simplify",   "stage1_simplify.py",  ["--in", "A", "--out", "A_sim"]),
-    ("1b-preopt",    "stage1b_preopt.py",   ["--in", "A_sim", "--out", "B"]),
-    ("2-quantize",   "stage2_quantize.py",  ["--in", "B", "--out", "C"]),
-    ("2-quantize-raw", "stage2_quantize.py", ["--in", "A", "--out", "C_raw"]),
-    ("3-runtime",    "stage3_runtime_opt.py", ["--in", "C"]),
+    ("0-download",   "dataset/download_models.py",  []),
+    ("0-export",     "pipeline/export_onnx.py",    []),
+    ("1-simplify",   "pipeline/simplify.py",  ["--in", "A", "--out", "A_sim"]),
+    ("1b-preopt",    "pipeline/preopt.py",   ["--in", "A_sim", "--out", "B"]),
+    ("2-quantize",   "pipeline/quantize.py",  ["--in", "B", "--out", "C"]),
+    ("2-quantize-raw", "pipeline/quantize.py", ["--in", "A", "--out", "C_raw"]),
+    ("3-runtime",    "pipeline/runtime_opt.py", ["--in", "C"]),
 ]
 ORDER = [s for s, _, _ in STAGES]
 
