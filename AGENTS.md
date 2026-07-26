@@ -19,7 +19,6 @@
 | analysis  | analysis/analyze.py         | reports/analysis/*_*.json | base |
 | bench     | analysis/bench.py           | reports/bench/<host>/*.csv | base |
 | compare   | analysis/compare_outputs.py | stdout | base (+dev for --decode) |
-| orchestrate | run_pipeline.py  | runs a chain | - |
 | data      | dataset/prepare_data.py    | data/calibration/*, data/eval/* | base (+dev for --hf-dataset) |
 
 ## Analysis passes (scripts/passes/)

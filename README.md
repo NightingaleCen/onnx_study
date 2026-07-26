@@ -45,12 +45,6 @@ source = "B"
 
 `stage` keys: `0_export`, `1_simplify`, `1b_preopt`, `2_quantize`.
 
-### `run_pipeline.py` — explicit chain
-
-The orchestrator runs stages sequentially:
-
-    uv run python scripts/run_pipeline.py --model STT --from 0-download --to 3-runtime
-
 ### Quick start
 
     uv run python scripts/dataset/download_models.py --model STT         # HF snapshot
