@@ -1,0 +1,38 @@
+# Pipeline DAG — every variant declares its source and the stage that builds it.
+# build.py reads this file, topologically sorts the variants, and runs the
+# stage scripts in dependency order.
+#
+# Add a new path: append a [model.variants.<name>] block, then:
+#     uv run python scripts/build.py --target <name>
+#
+# Folder names under models/STT/ match the variant names.
+
+[model]
+name = "STT"
+
+[model.variants.A]
+stage = "0_export"
+
+[model.variants.A_sim]
+stage = "1_simplify"
+source = "A"
+
+[model.variants.B]
+stage = "1b_preopt"
+source = "A_sim"
+
+[model.variants.C]
+stage = "2_quantize"
+source = "B"
+
+[model.variants.C_raw]
+stage = "2_quantize"
+source = "A"
+
+[model.variants.B_skip_sim]
+stage = "1b_preopt"
+source = "A"
+
+[model.variants.C_skip_sim]
+stage = "2_quantize"
+source = "B_skip_sim"

@@ -143,6 +143,8 @@ def main():
     ap.add_argument("--max-new-tokens", type=int, default=24)
     ap.add_argument("--dec-fix-len", type=int, default=128,
                     help="fixed decoder token length baked into graph + runtime padding target")
+    ap.add_argument("--out", dest="out", default="A",
+                    help="output variant dir under models/<model>/")
     args = ap.parse_args()
     assert args.max_new_tokens + 1 <= args.dec_fix_len, "dec-fix-len must exceed max-new-tokens"
 
@@ -169,7 +171,7 @@ def main():
         idsN = torch.tensor([[bos] * N])          # trace/eval input at fixed dec_len
         ref_logits = dec(idsN, ref_hs)            # [1, N, V]
 
-    out_dir = stage_dir(args.model, "A")
+    out_dir = stage_dir(args.model, args.out)
     banner(f"Exporting to {out_dir} (opset {args.opset}, dec_fix_len={N})")
     with torch.no_grad():
         enc_path, dec_path = export(enc, dec, iv, idsN, ref_hs, out_dir, args.opset)
@@ -211,25 +213,25 @@ def main():
         print("text (transformers):", processor.batch_decode([gen_ids], skip_special_tokens=True)[0])
     assert match, "greedy decode mismatch between ORT pipeline and transformers"
 
-    write_manifest(args.model, "A", created_by="stage0_export.py",
+    write_manifest(args.model, args.out, created_by="stage0_export.py",
                    args={"opset": args.opset, "stateless_decoder": True,
                          "dec_fix_len": N,
                          "attn_impl": getattr(cfg, "_attn_implementation", "default")},
                    extra={"bos": bos, "eos": eos, "pad": pad,
                           "max_length": cfg.max_position_embeddings,
                           "sanity_tokens_match": match})
-    upsert_variant(args.model, "A", path="A", dtype="fp32",
+    upsert_variant(args.model, args.out, path=args.out, dtype="fp32",
                    note="raw PyTorch export (encoder + stateless decoder)", created_by="stage0_export.py")
     # gen_meta.json: minimal inference metadata for the base-only (Pi) greedy path
     import json
     (task_dir(args.model) / "gen_meta.json").write_text(json.dumps({
         "task": args.model, "opset": args.opset, "dec_fix_len": N,
         "bos": bos, "eos": eos, "pad": pad, "max_length": cfg.max_position_embeddings,
-        "encoder": "A/encoder_model.onnx", "decoder": "A/decoder_model.onnx",
+        "encoder": f"{args.out}/encoder_model.onnx", "decoder": f"{args.out}/decoder_model.onnx",
         "feature_sampling_rate": 16000, "feature_do_normalize": False,
         "max_tokens_per_second": 13.0,
     }, indent=2))
-    banner("Stage 0 export done -> models/%s/A" % args.model)
+    banner("Stage 0 export done -> models/%s/%s" % (args.model, args.out))
 
 
 if __name__ == "__main__":
