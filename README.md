@@ -23,7 +23,7 @@ map and the critical gotchas. The orchestrator runs them chained:
     uv run python scripts/stage0_export.py --model STT           # needs dev (torch/transformers)
     uv run python scripts/stage1_simplify.py --model STT
     uv run python scripts/stage1b_preopt.py --model STT
-    uv run python scripts/stage2_quantize.py --model STT         # -> C (per-tensor QDQ S8S8)
+    uv run python scripts/stage2_quantize.py --model STT         # -> C (dynamic QDQ, QInt8 weights)
     uv run python scripts/stage3_runtime_opt.py --model STT       # -> D_cpu (mac); D_xnn on Pi
     uv run python scripts/analyze.py --model STT --stage C        # runs the 3 analysis passes
     uv run python scripts/bench.py --model STT                   # 8-group matrix -> CSV

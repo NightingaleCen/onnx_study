@@ -32,10 +32,10 @@ Three stubs: `op_stats.py` (Pass1 operator counts), `quant_coverage.py` (Pass2 Q
 2. **dynamic_axes naming under dynamo**: when only ONE input has a symbolic dim, dynamo mis-applies the dim_param to the wrong tensor. Always pass empty-dict anchors for the concrete inputs too (see the decoder `dynamic_axes={"input_ids":{}, "encoder_hidden_states":{1:"enc_len"}, "logits":{}}` in stage0_export). Opset is 18 (dynamo min; outline wanted >=17).
 3. **ORT `enable_mem_pattern` must be OFF** for any session run on variable `enc_len`/audio (else "Shape mismatch attempting to re-use buffer"). GreedyPipeline and stage3 do this.
 4. **mac arm64 ORT wheel has NO XNNPACKExecutionProvider** (CoreML is the mac EP). D_xnn is produced only on the Pi (aarch64 ORT wheel includes XNNPACK). bench.py records `act_provider` so cross-machine comparison is honest.
-5. **quant_pre_process fails** on moonshine encoder (incomplete symbolic shape inference on conv strides / num_samples). stage1b is best-effort: it copies the encoder through unchanged and only pre-processes the decoder. quantize_static still succeeds on the un-preprocessed encoder.
+5. **quant_pre_process fails** on moonshine encoder (incomplete symbolic shape inference on conv strides / num_samples). stage1b is best-effort: it copies the encoder through unchanged and only pre-processes the decoder. With dynamic quantization this is harmless — no calibration or shape inference is needed.
 6. **`per_channel=True` trips CPU EP's QLinearMatMul** ("input zero point must be scalar"). Default is per-tensor (outline's S8S8 standard). `--per-channel` is opt-in for experimenting with XNNPACK per-channel on the Pi.
 7. **stage3 file order**: process encoder before decoder (alphabetical would do decoder first, which needs encoder output as cross-attn input for the dump run).
-8. **External data**: stage0 flattens `.onnx.data` into single-file protobufs so downstream onnxsim/quantize_static/netron are simple.
+8. **External data**: stage0 flattens `.onnx.data` into single-file protobufs so downstream onnxsim/quantize/netron are simple.
 
 ## Data ownership
 YOU supply the dataset: drop audio in `data/raw/` (or `--hf-dataset`), run `prepare_data.py`. Split is deterministic (seed 1337) -> identical on both machines -> no audio sync needed. 16 kHz mono 16-bit PCM is the contract; `bench.py`/`stage2` read via `common.preprocess_audio` (soundfile-only, no transformers, Pi-safe).
