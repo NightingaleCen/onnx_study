@@ -15,9 +15,8 @@ The pipeline is task-named (e.g. `STT` under `models/STT/`).
 ### `build.py` — declarative pipeline (recommended)
 
 `build.py` reads `pipeline.toml` (which defines the DAG of variants and their
-dependencies) and runs the stage scripts in topological order. It skips variants
-whose outputs already exist (use `--force` to rebuild). Each completed stage
-auto-registers itself for downstream benchmarking and analysis.
+dependencies) and runs the stage scripts in topological order. 
+Each completed stage auto-registers itself in `models/<model>/variants.json` for downstream benchmarking and analysis.
 
 ```
 # Build all variants in dependency order:
@@ -25,9 +24,6 @@ uv run python scripts/build.py
 
 # Build a single variant (+ its dependency chain):
 uv run python scripts/build.py --target C_skip_sim
-
-# Force rebuild even if outputs exist:
-uv run python scripts/build.py --force
 ```
 
 `pipeline.toml` format:

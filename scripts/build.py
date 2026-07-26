@@ -1,13 +1,12 @@
 """Build pipeline variants declaratively from pipeline.toml.
 
-Resolves the DAG: each variant depends on its ``source``. Infrastructure
-variants that don't produce .onnx files (currently only stage0 download)
-are skipped — they are always built on demand by other scripts.
+Resolves the DAG: each variant depends on its ``source``. Variants already
+built in the same run (via shared dependencies) are skipped; nothing is
+skipped based on disk state — every invocation rebuilds from scratch.
 
 Usage:
     uv run python scripts/build.py                    # build all variants
     uv run python scripts/build.py --target C_skip_sim  # build a single variant + its chain
-    uv run python scripts/build.py --force            # rebuild even if outputs exist
 """
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import task_dir, list_onnx, MODELS_DIR, banner  # noqa: E402
+from common import banner  # noqa: E402
 
 SCRIPT_ROOT = Path(__file__).resolve().parent / "pipeline"
 
@@ -28,12 +27,7 @@ STAGE_SPEC = {
 }
 
 
-def exists(variant: str, model: str) -> bool:
-    d = task_dir(model) / variant
-    return d.exists() and bool(list_onnx(d))
-
-
-def build(target: str, model: str, variants: dict, force: bool, built: set):
+def build(target: str, model: str, variants: dict, built: set):
     if target in built:
         return
     v = variants[target]
@@ -41,11 +35,7 @@ def build(target: str, model: str, variants: dict, force: bool, built: set):
     if source:
         if source not in variants:
             raise SystemExit(f"variant '{target}' depends on '{source}' which is not defined in pipeline.toml")
-        build(source, model, variants, force, built)
-    if not force and exists(target, model):
-        print(f"  [{target}] already exists -> skip")
-        built.add(target)
-        return
+        build(source, model, variants, built)
 
     spec = STAGE_SPEC[v["stage"]]
     script = SCRIPT_ROOT / spec["script"]
@@ -54,7 +44,7 @@ def build(target: str, model: str, variants: dict, force: bool, built: set):
         cmd += ["--in", source, "--out", target]
     if target == "A":
         cmd += ["--dec-fix-len", "128"]
-    print(f"  [{target}] {'force rebuild' if force else 'build'} -> {' '.join(cmd)}")
+    print(f"  [{target}] build -> {' '.join(cmd)}")
     result = subprocess.run(cmd)
     if result.returncode != 0:
         raise SystemExit(f"build of {target} failed (exit {result.returncode})")
@@ -65,14 +55,12 @@ def main():
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", default=None, help="single variant to build (default: all)")
-    ap.add_argument("--force", action="store_true", help="rebuild even if output exists")
     args = ap.parse_args()
 
     cfg = tomllib.loads((Path("pipeline.toml").read_text()))
     model: str = cfg["model"]["name"]
     variants: dict = cfg["model"]["variants"]
 
-    # topological order — simple: if no cycles, just process in dependency order
     in_degree: dict[str, int] = defaultdict(int)
     deps: dict[str, list[str]] = defaultdict(list)
     for name, v in variants.items():
@@ -97,7 +85,7 @@ def main():
     banner(f"build pipeline ({model}) -> {targets}")
     built: set[str] = set()
     for t in targets:
-        build(t, model, variants, args.force, built)
+        build(t, model, variants, built)
     print("done.")
 
 
