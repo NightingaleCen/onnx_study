@@ -55,8 +55,10 @@ def accuracy_scores(variant_pipe, wavs, transcripts, decode_fn, max_new_tokens):
         wav = preprocess_audio(Path(wpath))
         ids, _ = variant_pipe.run(wav, max_new_tokens)
         hyp = decode_fn(ids)
-        wers.append(jiwer.wer(ref, hyp))
-        cers.append(jiwer.cer(ref, hyp))
+        ref_clean = ref.replace(" ", "")
+        hyp_clean = hyp.replace(" ", "")
+        wers.append(jiwer.wer(ref_clean, hyp_clean))
+        cers.append(jiwer.cer(ref_clean, hyp_clean))
         n_ok += 1
     if not wers:
         return float("nan"), float("nan"), 0
@@ -70,7 +72,8 @@ def main():
     ap.add_argument("--opt-levels", default="disable_all,extended")
     ap.add_argument("--measurements", type=int, default=30)
     ap.add_argument("--warmup", type=int, default=5)
-    ap.add_argument("--max-new-tokens", type=int, default=24)
+    ap.add_argument("--max-new-tokens", type=int, default=0,
+                    help="max tokens per decode (0 = auto from audio duration × 13 tok/s)")
     ap.add_argument("--threads", type=int, default=None)
     ap.add_argument("--accuracy", action="store_true",
                     help="measure WER/CER on eval set (needs data/eval/transcripts.csv)")

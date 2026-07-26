@@ -141,7 +141,7 @@ def main():
     ap.add_argument("--model", default="STT")
     ap.add_argument("--opset", type=int, default=OPSET)
     ap.add_argument("--max-new-tokens", type=int, default=24)
-    ap.add_argument("--dec-fix-len", type=int, default=48,
+    ap.add_argument("--dec-fix-len", type=int, default=128,
                     help="fixed decoder token length baked into graph + runtime padding target")
     args = ap.parse_args()
     assert args.max_new_tokens + 1 <= args.dec_fix_len, "dec-fix-len must exceed max-new-tokens"
@@ -227,6 +227,7 @@ def main():
         "bos": bos, "eos": eos, "pad": pad, "max_length": cfg.max_position_embeddings,
         "encoder": "A/encoder_model.onnx", "decoder": "A/decoder_model.onnx",
         "feature_sampling_rate": 16000, "feature_do_normalize": False,
+        "max_tokens_per_second": 13.0,
     }, indent=2))
     banner("Stage 0 export done -> models/%s/A" % args.model)
 

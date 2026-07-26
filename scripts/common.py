@@ -38,6 +38,7 @@ DATA_DIR = ROOT / "data"
 REPORTS_DIR = ROOT / "reports"
 
 CANONICAL_SR = 16000  # moonshine expects 16 kHz raw waveform input
+MAX_TOKENS_PER_SECOND = 13.0  # moonshine README: non-Latin languages (including Chinese)
 
 
 # --------------------------------------------------------------------------- paths
@@ -302,8 +303,11 @@ class GreedyPipeline:
         self.enc_sess = ort.InferenceSession(str(variant_path / "encoder_model.onnx"), so, providers=used)
         self.dec_sess = ort.InferenceSession(str(variant_path / "decoder_model.onnx"), so, providers=used)
 
-    def run(self, input_values: np.ndarray, max_new_tokens: int) -> tuple[list[int], dict]:
-        import time
+    def run(self, input_values: np.ndarray, max_new_tokens: int = 0) -> tuple[list[int], dict]:
+        import math, time
+        if max_new_tokens <= 0:
+            dur = len(input_values) / CANONICAL_SR
+            max_new_tokens = min(math.ceil(dur * MAX_TOKENS_PER_SECOND), self.N - 1)
         assert max_new_tokens + 1 <= self.N, f"max_new_tokens={max_new_tokens} exceeds dec_fix_len={self.N}"
         t0 = time.perf_counter()
         enc_out = self.enc_sess.run(None, {"input_values": input_values[None, :].astype(np.float32)})[0]

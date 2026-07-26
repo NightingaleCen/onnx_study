@@ -23,7 +23,8 @@ def main():
     ap.add_argument("--model", default="STT")
     ap.add_argument("--ref", default="A")
     ap.add_argument("--test", required=True)
-    ap.add_argument("--max-new-tokens", type=int, default=24)
+    ap.add_argument("--max-new-tokens", type=int, default=0,
+                    help="0 = auto from audio duration × 13 tok/sec (Chinese)")
     ap.add_argument("--decode", action="store_true", help="decode text via transformers (dev group)")
     ap.add_argument("--atol", type=float, default=0.0, help="if >0 also compare raw logits on first step")
     args = ap.parse_args()

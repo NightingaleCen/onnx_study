@@ -76,6 +76,8 @@ def transcribe_mic(model: str, variant: str, max_tokens: int):
             stream.start()
     except KeyboardInterrupt:
         print("\ndone.")
+        import os
+        os._exit(0)
     finally:
         recorder.recording = False
         stream.stop()
@@ -101,7 +103,8 @@ def main():
     ap.add_argument("--variant", default="A")
     ap.add_argument("--file", default=None, help="path to an audio file")
     ap.add_argument("--mic", action="store_true", help="interactive microphone mode")
-    ap.add_argument("--max-new-tokens", type=int, default=40)
+    ap.add_argument("--max-new-tokens", type=int, default=0,
+                    help="0 = auto from audio duration × 13 tok/sec (Chinese)")
     args = ap.parse_args()
     if not args.file and not args.mic:
         ap.error("specify --file <path> or --mic")
