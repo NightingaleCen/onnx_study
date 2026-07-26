@@ -1,12 +1,13 @@
-"""Stage 3: C -> D_xnn / D_cpu  (runtime QDQ fusion via optimized_model_filepath).
+"""Stage 3: C -> D_{provider}  (runtime QDQ fusion via optimized_model_filepath).
 
-Creates an ORT InferenceSession at ORT_ENABLE_EXTENDED with the EP you request and
+Creates an ORT InferenceSession at ORT_ENABLE_EXTENDED with the requested EP and
 serializes the post-optimization graph (optimized_model_filepath). On the mac arm64
-ORT wheel XNNPACK is NOT compiled in -> only D_cpu is produced there; the Pi's
-aarch64 wheel includes XNNPACK -> D_xnn is produced there. bench.py records the EP
-that actually ran.
+ORT wheel XNNPACK is NOT compiled in; the Pi's aarch64 wheel includes it. bench.py
+records the EP that actually ran.
 
-    uv run python scripts/pipeline/runtime_opt.py --model STT --in C
+    uv run python scripts/pipeline/runtime_opt.py --model STT --in C --provider cpu
+    uv run python scripts/pipeline/runtime_opt.py --model STT --in C --provider xnnpack
+    uv run python scripts/pipeline/runtime_opt.py --model STT --in C --provider xnnpack --out D_xnn
 """
 from __future__ import annotations
 
@@ -61,23 +62,26 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="STT")
     ap.add_argument("--in", dest="inp", default="C")
+    ap.add_argument("--provider", default="cpu", choices=["cpu", "xnnpack", "coreml"],
+                    help="EP to request (default: cpu)")
+    ap.add_argument("--out", dest="out", default="",
+                    help="output variant name (default: D_<provider>)")
     args = ap.parse_args()
+    EP_TO_SUFFIX = {"xnnpack": "xnn", "cpu": "cpu", "coreml": "coreml"}
+    out = args.out or f"D_{EP_TO_SUFFIX[args.provider]}"
     wavs = sorted(glob.glob("data/calibration/*.wav"))
     assert wavs, "need data/calibration/*.wav (run prepare_data.py)"
     meta = __import__("common").load_gen_meta(args.model)
-    banner(f"stage3 runtime opt  {args.inp} -> D_xnn / D_cpu")
-    made_xnn = dump_one(args.inp, "D_xnn", "xnnpack", args.model, wavs[0], meta)
-    made_cpu = dump_one(args.inp, "D_cpu", "cpu", args.model, wavs[0], meta)
-    for name, made in (("D_xnn", made_xnn), ("D_cpu", made_cpu)):
-        if made:
-            write_manifest(args.model, name, created_by="stage3_runtime_opt.py",
-                           args={"from": args.inp, "opt_level": "ORT_ENABLE_EXTENDED", "ep": name},
-                           extra={"dtype": "int8"})
-            upsert_variant(args.model, name, path=name, dtype="int8",
-                           note=f"runtime-optimized {args.inp} ({name})", created_by="stage3_runtime_opt.py")
-    if not made_xnn:
-        print("NOTE: XNNPACK not available on this build (mac arm64 ORT wheel). "
-              "Run this same script on the Pi to produce D_xnn.")
+    banner(f"stage3 runtime opt  {args.inp} -> {out}  (provider={args.provider})")
+    made = dump_one(args.inp, out, args.provider, args.model, wavs[0], meta)
+    if not made:
+        print(f"NOTE: {args.provider} EP not available on this build.")
+        sys.exit(0)
+    write_manifest(args.model, out, created_by="stage3_runtime_opt.py",
+                   args={"from": args.inp, "opt_level": "ORT_ENABLE_EXTENDED", "ep": args.provider},
+                   extra={"dtype": "int8"})
+    upsert_variant(args.model, out, path=out, dtype="int8",
+                   note=f"runtime-optimized {args.inp} ({args.provider})", created_by="stage3_runtime_opt.py")
     print("done.")
 
 

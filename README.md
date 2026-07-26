@@ -53,7 +53,8 @@ source = "B"
     uv run python scripts/pipeline/simplify.py --model STT
     uv run python scripts/pipeline/preopt.py --model STT
     uv run python scripts/pipeline/quantize.py --model STT              # -> C (dynamic QDQ, QInt8 weights)
-    uv run python scripts/pipeline/runtime_opt.py --model STT            # -> D_cpu (mac); D_xnn on Pi
+    uv run python scripts/pipeline/runtime_opt.py --model STT --provider cpu         # -> D_cpu
+    uv run python scripts/pipeline/runtime_opt.py --model STT --provider xnnpack     # -> D_xnn (Pi only)
     uv run python scripts/analysis/analyze.py --model STT --stage C      # runs the 3 analysis passes
     uv run python scripts/analysis/bench.py --model STT                  # 8-group matrix -> CSV
     uv run python scripts/analysis/compare_outputs.py --model STT --ref A --test C
