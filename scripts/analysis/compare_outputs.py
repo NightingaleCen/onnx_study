@@ -1,11 +1,8 @@
-"""compare_outputs.py -- correctness of any variant (incl. D_manual) vs a reference.
+"""Compare greedy decode outputs between two model variants.
 
-Runs greedy decode on the eval set for --ref and --test and compares:
-  * exact token-id sequence match ratio (always available, base deps only)
-  * decoded text (optional, needs `dev` group: transformers AutoProcessor)
-
-If you hand-edited a graph (D_manual) and it changed outputs, this is how you
-PROVE correctness numerically before trusting benchmarks.
+Runs greedy decode on eval wavs for --ref and --test and reports:
+  - Exact token-id sequence match ratio (base deps only)
+  - Decoded text diff (optional, needs dev group)
 
     uv run python scripts/analysis/compare_outputs.py --model STT --ref A --test D_manual
     uv run python scripts/analysis/compare_outputs.py --model STT --ref A --test C --decode

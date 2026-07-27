@@ -1,17 +1,11 @@
-"""Stage 2: B -> C  (dynamic INT8 quantization of weights).
+"""Stage 2: B -> C  (dynamic INT8 weight quantization).
 
-Dynamic quantization is the default (and only) method — ASR decoder's
-auto-regressive structure makes static activation quantization too brittle
-(we measured CER 0.15 -> ~1.0 collapse on AISHELL). Dynamic quantizes only
-the weights offline; activation scales are computed per-inference-step, no
-calibration data needed.
+Applies onnxruntime.quantization.quantize_dynamic with QInt8 weights.
+Produces a QDQ model — no calibration data required; activation scales
+are computed at inference time.
 
-Produces a QDQ model (QuantFormat.QDQ with DynamicQuantizeLinear nodes).
-The INT8 weight computation + ORT EXTENDED fusion yields ~30-50% speedup
-with modest CER degradation (~0.15 -> ~0.28).
-
-    uv run python scripts/pipeline/quantize.py --model STT            # B -> C
-    uv run python scripts/pipeline/quantize.py --model STT --in A --out C_raw   # no simplify
+    uv run python scripts/pipeline/quantize.py --model STT               # B -> C
+    uv run python scripts/pipeline/quantize.py --model STT --in A --out C_raw
 """
 from __future__ import annotations
 

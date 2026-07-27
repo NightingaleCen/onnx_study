@@ -1,14 +1,12 @@
-"""analyze.py -- run the three analysis passes on a stage dir and report.
+"""Run analysis passes on a stage directory.
 
-Passes live in scripts/passes/ as STUBS. You implement them; this driver tolerates
-NotImplementedError (prints 'not implemented' and continues) so you can implement
-passes one at a time and still get partial output.
+Executes op_stats, quant_coverage, and redundant_qdq on every .onnx file
+in the stage. Unimplemented passes are skipped with a warning. Writes a
+JSON report and prints a console table.
 
     uv run python scripts/analysis/analyze.py --model STT --stage B
-    uv run python scripts/analysis/analyze.py --model STT --stage C       (after stage3 also D_xnn, D_cpu)
+    uv run python scripts/analysis/analyze.py --model STT --stage C
     uv run python scripts/analysis/analyze.py --model STT --stage A --pass op_stats
-
-Writes reports/analysis/<model>_<stage>.json and prints a console table.
 """
 from __future__ import annotations
 

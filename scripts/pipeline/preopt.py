@@ -1,8 +1,8 @@
-"""Stage 1b: A' -> B  (quant pre-processing / symbolic shape inference).
+"""Stage 1b: A_sim -> B  (quant pre-processing / symbolic shape inference).
 
-Runs onnxruntime.quantization.shape_inference.quant_pre_process before static
-quantization. It performs symbolic shape inference and folds/prepares the graph so
-the QDQ quantizer has accurate tensor type info (critical for dynamic shapes).
+Runs onnxruntime.quantization.shape_inference.quant_pre_process to prepare
+the graph for QDQ quantization. Falls back to copying the input as-is on
+failure.
 
     uv run python scripts/pipeline/preopt.py --model STT --in A_sim --out B
 """

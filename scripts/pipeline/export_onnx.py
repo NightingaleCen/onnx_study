@@ -1,20 +1,13 @@
-"""Stage 0: export PyTorch (transformers) -> ONNX (variant A).
+"""Stage 0: Export PyTorch moonshine model to ONNX (variant A).
 
-Architecture (moonshine): encoder-decoder ASR.
-- encoder_model.onnx : input_values (raw 16kHz waveform) -> last_hidden_state [B, T', 288]
-- decoder_model.onnx : input_ids + encoder_hidden_states -> logits [B, L, 32768]  (stateless, no KV cache)
+Produces two ONNX files under models/<model>/A/:
+  - encoder_model.onnx  (symbolic audio length)
+  - decoder_model.onnx  (fixed token length, stateless — no KV cache)
 
-Stateless decoder rationale: the Wav2Vec2 feature extractor with do_normalize=False
-is essentially a no-op on a single (batch=1, no padding) utterance, so the encoder
-needs only input_values; the decoder is exported WITHOUT use_cache so the
-EncoderDecoderCache Cache object (untraceable by classic torch.onnx) is skipped.
-Greedy decode re-runs the decoder each step (O(n^2)) -- fine for a tiny model and
-keeps the stage-comparison overhead constant. The official onnx-community converter
-uses the identical contract (see reference-onnx/ -- inputs/outputs match above).
+Requires the ``dev`` dependency group (torch/transformers). Mac-only.
 
-This script needs the `dev` dependency group (torch / transformers). Mac-only.
-
-    uv run python scripts/pipeline/export_onnx.py --model STT --opset 17 --max-new-tokens 24
+    uv run python scripts/pipeline/export_onnx.py --model STT
+    uv run python scripts/pipeline/export_onnx.py --model STT --dec-fix-len 128
 """
 from __future__ import annotations
 
@@ -25,6 +18,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import (  # noqa: E402
     hf_dir, stage_dir, task_dir, write_manifest, upsert_variant, banner,
+    OPT_LEVELS,
 )
 
 import numpy as np
@@ -120,7 +114,9 @@ def ort_greedy(enc_path, dec_path, input_values_np, bos, eos, pad,
                max_new_tokens, dec_fix_len, opt_level="extended"):
     # dec_len is static in the exported graph; always feed input_ids of length
     # dec_fix_len (real tokens left-aligned, right-padded with `pad`).
-    so = ort.SessionOptions(); so.enable_mem_pattern = False
+    so = ort.SessionOptions()
+    so.graph_optimization_level = OPT_LEVELS[opt_level]
+    so.enable_mem_pattern = False
     enc_sess = ort.InferenceSession(str(enc_path), sess_options=so)
     dec_sess = ort.InferenceSession(str(dec_path), sess_options=so)
     enc_out = enc_sess.run(None, {"input_values": input_values_np[None, :]})[0]  # [1, T', 288]

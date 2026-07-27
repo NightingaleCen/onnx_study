@@ -1,13 +1,12 @@
-"""Stage 3: C -> D_{provider}  (runtime QDQ fusion via optimized_model_filepath).
+"""Stage 3: C -> D_{provider}  (runtime QDQ fusion).
 
-Creates an ORT InferenceSession at ORT_ENABLE_EXTENDED with the requested EP and
-serializes the post-optimization graph (optimized_model_filepath). On the mac arm64
-ORT wheel XNNPACK is NOT compiled in; the Pi's aarch64 wheel includes it. bench.py
-records the EP that actually ran.
+Runs each ONNX model through an ORT InferenceSession at ORT_ENABLE_EXTENDED
+with the requested execution provider and serializes the optimized graph.
+Processes the encoder before the decoder so encoder output can feed the
+decoder's dump run.
 
     uv run python scripts/pipeline/runtime_opt.py --model STT --in C --provider cpu
     uv run python scripts/pipeline/runtime_opt.py --model STT --in C --provider xnnpack
-    uv run python scripts/pipeline/runtime_opt.py --model STT --in C --provider xnnpack --out D_xnn
 """
 from __future__ import annotations
 
