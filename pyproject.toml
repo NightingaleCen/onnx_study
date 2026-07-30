@@ -9,6 +9,7 @@ dependencies = [
     "netron>=9.1.8",
     "numpy>=2.5.1",
     "onnx>=1.22.0",
+    "onnxruntime>=1.27.0",
     "onnxsim>=0.6.5",
     "psutil>=7.2.2",
     "soundfile>=0.14.0",
