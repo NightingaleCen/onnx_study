@@ -20,8 +20,6 @@ import onnx
 
 PASSES = {
     "op_stats": "op_stats",
-    "quant_coverage": "quant_coverage",
-    "redundant_qdq": "redundant_qdq",
 }
 
 
@@ -61,11 +59,6 @@ def main():
                 ops = res.get("ops", {})
                 top = ", ".join(f"{k}:{v}" for k, v in sorted(ops.items(), key=lambda x: -x[1])[:8])
                 rows.append([pname, f"{res.get('total_nodes','?')} nodes", top])
-            elif pname == "quant_coverage":
-                rows.append([pname, f"{res.get('coverage_pct','-')}%",
-                             f"cov={res.get('quantized')}/{res.get('total')} notq={len(res.get('not_quantized',[]))}"])
-            elif pname == "redundant_qdq":
-                rows.append([pname, f"{res.get('redundant_pairs',0)} pairs", ""])
         print(f"\n## {p.name}")
         print(tabulate(rows, headers=["pass", "summary", "detail"]))
     out = REPORTS_DIR / "analysis" / f"{args.model}_{args.stage}.json"
