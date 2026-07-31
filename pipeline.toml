@@ -42,5 +42,14 @@ source = "B_skip_sim"
 [model.variants.D]
 stage = "3_runtime"
 source = "C"
-provider = "cpu"
-# On the Pi change provider to "xnnpack".
+provider = "xnnpack"
+
+[model.variants.D_raw]
+stage = "3_runtime"
+source = "C_raw"
+provider = "xnnpack"
+
+[model.variants.D_skip_sim]
+stage = "3_runtime"
+source = "C_skip_sim"
+provider = "xnnpack"
