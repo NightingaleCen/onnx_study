@@ -24,7 +24,7 @@ SCRIPT_ROOT = Path(__file__).resolve().parent / "pipeline"
 
 STAGE_SPEC = {
     "1_simplify":    {"script": "simplify.py",  "has_source": True},
-    "1b_preopt":     {"script": "preopt.py",   "has_source": True},
+    "1b_preopt":     {"script": "preopt.py",   "has_source": True, "extra_args": ["enable_optimize"]},
     "2_quantize":    {"script": "quantize.py",  "has_source": True},
     "3_runtime":     {"script": "runtime_opt.py", "has_source": True, "extra_args": ["provider"]},
 }
@@ -62,7 +62,13 @@ def build(target: str, model: str, variants: dict, built: set):
         cmd += ["--in", in_dir, "--out", target]
     for key in spec.get("extra_args", []):
         if key in v:
-            cmd += [f"--{key}", str(v[key])]
+            if isinstance(v[key], bool):
+                # boolean flags: only append the flag when true, so a literal
+                # `key = false` in pipeline.toml does not enable it
+                if v[key]:
+                    cmd += [f"--{key}"]
+            else:
+                cmd += [f"--{key}", str(v[key])]
     print(f"  [{target}] build -> {' '.join(cmd)}")
     result = subprocess.run(cmd)
     if result.returncode != 0:
