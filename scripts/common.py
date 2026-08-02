@@ -185,9 +185,9 @@ def resolve_providers(requested: str | list[str]) -> tuple[list[str], list[str]]
     """Return (providers_actually_used, providers_requested_but_unavailable).
 
     ``requested`` may be 'xnnpack', 'cpu', 'coreml' or an explicit EP list.
-    XNNPACK is requested as 'xnnpack'/'XnnPACKExecutionProvider'.
+    XNNPACK is requested as 'xnnpack'/'XnnpackExecutionProvider'.
     """
-    name_map = {"xnnpack": "XnnPACKExecutionProvider", "cpu": "CPUExecutionProvider",
+    name_map = {"xnnpack": "XnnpackExecutionProvider", "cpu": "CPUExecutionProvider",
                 "coreml": "CoreMLExecutionProvider"}
     if isinstance(requested, str):
         requested = [requested]
