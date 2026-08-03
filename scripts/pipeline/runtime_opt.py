@@ -14,7 +14,7 @@ import argparse, sys, glob
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from common import (stage_dir, list_onnx, write_manifest, upsert_variant,  # noqa: E402
-                    preprocess_audio, resolve_providers, banner)
+                    preprocess_audio, resolve_providers, ep_options, banner)
 
 import numpy as np
 import onnxruntime as ort
@@ -48,7 +48,8 @@ def dump_one(in_stage, out_stage, prov_key, model, calib_wav, meta):
     for p in files:
         op = out_dir / p.name
         so.optimized_model_filepath = str(op)
-        sess = ort.InferenceSession(str(p), so, providers=used)
+        sess = ort.InferenceSession(str(p), so, providers=used,
+                                    provider_options=ep_options(used))
         feed, _ = _feed(p, calib_wav, meta, enc_out)
         sess.run(None, feed)
         if "input_values" in feed:  # cache encoder output for the decoder dump

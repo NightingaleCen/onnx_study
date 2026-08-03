@@ -65,6 +65,8 @@ def main():
     ap.add_argument("--max-new-tokens", type=int, default=0,
                     help="max tokens per decode (0 = auto from audio duration × 13 tok/s)")
     ap.add_argument("--threads", type=int, default=None)
+    ap.add_argument("--xnn-threads", type=int, default=0,
+                    help="XNNPACK internal thread pool size (0 = inherit ORT intra-op pool; default)")
     ap.add_argument("--accuracy", action="store_true",
                     help="measure WER/CER on eval set (needs data/eval/transcripts.csv)")
     args = ap.parse_args()
@@ -94,7 +96,8 @@ def main():
         dtype = regs[v].get("dtype", "?")
         used, missing = resolve_providers(args.provider)
         pipe = GreedyPipeline(args.model, vpath, opt_level="disable_all",
-                              providers=args.provider, intra_op_threads=args.threads)
+                              providers=args.provider, intra_op_threads=args.threads,
+                              xnn_threads=args.xnn_threads)
         w0 = preprocess_audio(Path(wavs[0]))
         for _ in range(args.warmup):
             pipe.run(w0, mnt)
@@ -113,6 +116,7 @@ def main():
         row = dict(host=hostname(), git=git_commit(), ort=ort.__version__,
                    model=args.model, variant=v, dtype=dtype, opt_level="disable_all",
                    req_provider=args.provider, act_provider=used[0], threads=args.threads or "def",
+                   xnn_threads=args.xnn_threads,
                    measurements=args.measurements, warmup=args.warmup, max_new_tokens=mnt,
                    p50=percentile(times, 50), p95=percentile(times, 95), p99=percentile(times, 99),
                    enc_p50=percentile(enct, 50), dec_p50=percentile(dect, 50),

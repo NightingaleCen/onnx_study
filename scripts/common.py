@@ -200,8 +200,23 @@ def resolve_providers(requested: str | list[str]) -> tuple[list[str], list[str]]
     return have, missing
 
 
+def ep_options(used: list[str], xnn_threads: int | None = 0) -> list[dict | None]:
+    """ORT ``provider_options`` list parallel to ``used``.
+
+    XNNPACK keeps its own internal thread pool; without explicit config it
+    defaults to a single thread, which handicaps any node it runs on. Passing
+    ``intra_op_num_threads=0`` makes XNNPACK inherit the ORT intra-op pool size
+    (one knob, ``--threads``, controls both). ``None`` leaves the EP untouched.
+    """
+    if xnn_threads is None:
+        return [None for _ in used]
+    return [({"intra_op_num_threads": str(xnn_threads)} if p == "XnnpackExecutionProvider" else None)
+            for p in used]
+
+
 def make_session(model_path: Path | str, *, opt_level: str = "extended",
                  providers: str | list[str] = "cpu", intra_op_threads: int | None = None,
+                 xnn_threads: int | None = 0,
                  optimized_model_filepath: str | None = None) -> ort.InferenceSession:
     so = ort.SessionOptions()
     so.graph_optimization_level = OPT_LEVELS[opt_level]
@@ -210,7 +225,8 @@ def make_session(model_path: Path | str, *, opt_level: str = "extended",
     if optimized_model_filepath:
         so.optimized_model_filepath = optimized_model_filepath
     used, _ = resolve_providers(providers)
-    return ort.InferenceSession(str(model_path), so, providers=used)
+    return ort.InferenceSession(str(model_path), so, providers=used,
+                                provider_options=ep_options(used, xnn_threads))
 
 
 # --------------------------------------------------------------------------- timing & memory
@@ -287,7 +303,8 @@ class GreedyPipeline:
     """
 
     def __init__(self, task: str, variant_path: Path, opt_level: str = "extended",
-                 providers: str | list[str] = "cpu", intra_op_threads: int | None = None):
+                 providers: str | list[str] = "cpu", intra_op_threads: int | None = None,
+                 xnn_threads: int | None = 0):
         self.meta = load_gen_meta(task)
         self.bos = self.meta["bos"]
         self.eos = self.meta["eos"]
@@ -301,8 +318,11 @@ class GreedyPipeline:
         used, missing = resolve_providers(providers)
         if missing:
             print(f"[GreedyPipeline] requested {missing} unavailable on this build; using {used}")
-        self.enc_sess = ort.InferenceSession(str(variant_path / "encoder_model.onnx"), so, providers=used)
-        self.dec_sess = ort.InferenceSession(str(variant_path / "decoder_model.onnx"), so, providers=used)
+        opts = ep_options(used, xnn_threads)
+        self.enc_sess = ort.InferenceSession(str(variant_path / "encoder_model.onnx"), so, providers=used,
+                                             provider_options=opts)
+        self.dec_sess = ort.InferenceSession(str(variant_path / "decoder_model.onnx"), so, providers=used,
+                                             provider_options=opts)
 
     def run(self, input_values: np.ndarray, max_new_tokens: int = 0) -> tuple[list[int], dict]:
         import math, time
