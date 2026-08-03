@@ -200,17 +200,18 @@ def resolve_providers(requested: str | list[str]) -> tuple[list[str], list[str]]
     return have, missing
 
 
-def ep_options(used: list[str], xnn_threads: int | None = 0) -> list[dict | None]:
-    """ORT ``provider_options`` list parallel to ``used``.
+def ep_options(used: list[str], xnn_threads: int | None = 0) -> list[dict]:
+    """ORT ``provider_options`` list parallel to ``used`` (values must be dicts).
 
     XNNPACK keeps its own internal thread pool; without explicit config it
     defaults to a single thread, which handicaps any node it runs on. Passing
     ``intra_op_num_threads=0`` makes XNNPACK inherit the ORT intra-op pool size
-    (one knob, ``--threads``, controls both). ``None`` leaves the EP untouched.
+    (one knob, ``--threads``, controls both). Other EPs get an empty dict (no
+    options); ``xnn_threads=None`` leaves XNNPACK untouched.
     """
     if xnn_threads is None:
-        return [None for _ in used]
-    return [({"intra_op_num_threads": str(xnn_threads)} if p == "XnnpackExecutionProvider" else None)
+        return [{} for _ in used]
+    return [({"intra_op_num_threads": str(xnn_threads)} if p == "XnnpackExecutionProvider" else {})
             for p in used]
 
 
