@@ -53,10 +53,12 @@ def _summarize(prov_op: dict[str, dict[str, tuple[int, int]]]) -> dict:
     return out
 
 
-def _make_session(path: Path, prov_key: str) -> ort.InferenceSession:
+def _make_session(path: Path, prov_key: str, prefix: str) -> ort.InferenceSession:
     so = ort.SessionOptions()
     so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_DISABLE_ALL
     so.enable_mem_pattern = False
+    so.enable_profiling = True
+    so.profile_file_prefix = prefix
     used, missing = resolve_providers(prov_key)
     if missing:
         print(f"    note: requested {missing} unavailable; using {used}")
@@ -72,21 +74,17 @@ def _audit(model: str, vpath: Path, prov_key: str, wav: Path, meta: dict,
         print(f"    skip: missing encoder_model.onnx/decoder_model.onnx in {vpath}")
         return {}
 
-    enc = _make_session(enc_path, prov_key)
+    enc = _make_session(enc_path, prov_key, f"audit_enc_{vpath.name}")
     feed = {"input_values": preprocess_audio(wav)[None, :].astype(np.float32)}
-    enc.run(None, feed)  # warmup (not profiled)
-    enc.enable_profiling()
     enc_out = enc.run(None, feed)[0]
     enc_trace = enc.end_profiling()
     enc_attr = _summarize(_parse_profile(enc_trace))
     Path(enc_trace).unlink(missing_ok=True)
 
-    dec = _make_session(dec_path, prov_key)
+    dec = _make_session(dec_path, prov_key, f"audit_dec_{vpath.name}")
     ids = [meta["bos"]] + [meta["pad"]] * (meta["dec_fix_len"] - 1)
     dec_feed = {"input_ids": np.asarray([ids], dtype=np.int64),
                 "encoder_hidden_states": enc_out}
-    dec.run(None, dec_feed)  # warmup
-    dec.enable_profiling()
     for _ in range(dec_steps):
         dec.run(None, dec_feed)
     dec_trace = dec.end_profiling()
